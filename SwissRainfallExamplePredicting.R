@@ -12,10 +12,12 @@ datn <- sqrt(sic.all$data)
 datp <- sqrt(sic.all$data)
 elevation <- sic.all$altitude/1000
 
+if(FALSE){
 #create fake data based on elevation
 for(i in 1:length(elevation)){
     datn[i] <- rnorm(1, 1+ 12*elevation[i],1)
     datp[i] <- rpois(1, exp(0.5 + 2*elevation[i]))
+}
 }
 
 #create mesh, spde object, projector matrix etc.
@@ -29,9 +31,8 @@ s.index <- inla.spde.make.index(name="spatial.field", n.spde=Swiss.spde$n.spde)
 
 #create prediction stuff
 
-
 point <- rbind(c(-45.38, -70),c(-1, -2),c(-3, -4),c(-5, -6),c(-7, -8),c(-9, -10))
-elevation.pred = c(0.5,1.0,1.5,2.0,2.5,3.0)
+elevation.pred = c(0.5,1.0,1.5,2.0,2.5,2.75)
 Apred <- inla.spde.make.A(Swiss.mesh, loc=point)
 stack.pred <- inla.stack(data=list(rain=NA), A=list(Apred,1), effects=list(c(s.index, list(Intercept=1)),
                                                                     list(Elevation=elevation.pred)), tag="pred")
@@ -84,10 +85,9 @@ for(i in 1:length(nu.pred)){
   rainfall.pred[i] = rnorm(1, nu.pred[i], 1)
 }
 
-plot(elevation, datn, pch=19)
-#plot(elevation, datp, pch=19)
+plot(elevation, datn, pch=19, xlim = c(0,max(elevation.pred, elevation)), ylim = c(0,max(rainfall.pred, datn)))
+#plot(elevation, datp, pch=19, xlim = c(0,max(elevation.pred, elevation)), ylim = c(0,max(rainfall.pred, datp)))
 points(elevation.pred, rainfall.pred, col = "red", pch=19)
-
 
 
 if(FALSE){
