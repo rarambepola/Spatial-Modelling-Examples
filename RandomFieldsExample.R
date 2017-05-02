@@ -28,10 +28,12 @@ plot(coord, cex=d$data)
 
 cov <- rep(0, n)
 response <- rep(0, n)
+response2 <- rep(0, n)
 
 for(i in 1:n){
   cov[i] <- runif(1,0,3)
   response[i] <- rnorm(1, 4 + 2*cov[i] + d$data[i])
+  response2[i] <- rnorm(1, 41 + 21*cov[i] + c[i])
 }
 
 
@@ -50,6 +52,10 @@ s.index <- inla.spde.make.index(name="spatial.field", n.spde=spde$n.spde)
 #add data to stack
 stack.norm <- inla.stack(data=list(Response=response), A=list(A,1), effects=list(c(s.index, list(Intercept=1)),
                                                                                  list(Covariate=cov)), tag="all")
+
+
+stack.norm2 <- inla.stack(data=list(Response=response2), A=list(A,1), effects=list(c(s.index, list(Intercept=1)),
+                                                                                 list(Covariate=cov)), tag="all")
 #define formula for model
 formula <- Response ~ -1 + Intercept + Covariate + f(spatial.field, model=spde)
 
@@ -59,3 +65,8 @@ output.pred <- inla(formula, data=inla.stack.data(stack.norm, spde=spde), family
 
 output.pred$summary.fixed
 
+output.pred2 <- inla(formula, data=inla.stack.data(stack.norm2, spde=spde), family="gaussian", 
+                    control.predictor=list(A=inla.stack.A(stack.norm2), compute=TRUE),
+                    control.compute=list(cpo=TRUE, dic=TRUE))
+
+output.pred2$summary.fixed
