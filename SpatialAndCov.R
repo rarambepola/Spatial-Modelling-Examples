@@ -10,6 +10,7 @@ for(i in 1:n){
   coord[i,] <- c(runif(1,0,10),runif(1,0,10))
 }
 
+
 pred.coord <- array(0,c(pred.n,2))
 for(i in 1:pred.n){
   pred.coord[i,] <- c(runif(1,0,10), runif(1,0,10))
