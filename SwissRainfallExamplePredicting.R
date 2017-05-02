@@ -90,7 +90,7 @@ plot(elevation, datn, pch=19, xlim = c(0,max(elevation.pred, elevation)), ylim =
 points(elevation.pred, rainfall.pred, col = "red", pch=19)
 
 
-if(FALSE){
+if(TRUE){
 plot(elevation, datn)
 plot(coord, cex=elevation, main="Elevation")
 #plot(coord, cex=datp/40, main = "Poisson response")
