@@ -2,7 +2,7 @@ library(RandomFields)
 library(TMB)
 
 #choose number of points + prediction points
-n=1000
+n=200
 pred.n = 100
 
 #generate coordinates for points
@@ -33,9 +33,9 @@ response2 <- rep(0, n)
 
 for(i in 1:n){
   cov[i] <- runif(1,0,3)
-  response[i] <- rnorm(1, 4 + 2*cov[i] + d$data[i], 1)
-  #response[i] <- rnorm(1, 4 + 2*cov[i], 1)
-  response2[i] <- rnorm(1, 41 + 21*cov[i] + c[i], 1)
+  #response[i] <- rnorm(1, 4 + 2*cov[i] + d$data[i], 1)
+  response[i] <- rnorm(1, 4 + 2*cov[i], 1)
+  #response2[i] <- rnorm(1, 41 + 21*cov[i] + c[i], 1)
 }
 
 #TMB stuff
