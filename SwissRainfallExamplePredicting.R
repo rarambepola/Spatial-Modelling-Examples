@@ -31,8 +31,8 @@ s.index <- inla.spde.make.index(name="spatial.field", n.spde=Swiss.spde$n.spde)
 
 #create prediction stuff
 
-point <- rbind(c(-45.38, -70),c(-1, -2),c(-3, -4),c(-5, -6),c(-7, -8),c(-9, -10))
-elevation.pred = c(0.5,1.0,1.5,2.0,2.5,2.75)
+point <- rbind(c(-45.38, -70))
+elevation.pred = c(0.5)
 Apred <- inla.spde.make.A(Swiss.mesh, loc=point)
 stack.pred <- inla.stack(data=list(rain=NA), A=list(Apred,1), effects=list(c(s.index, list(Intercept=1)),
                                                                     list(Elevation=elevation.pred)), tag="pred")

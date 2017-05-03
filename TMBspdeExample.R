@@ -2,7 +2,7 @@ library(RandomFields)
 library(TMB)
 
 #choose number of points + prediction points
-n=500
+n=200
 pred.n = 100
 
 #generate coordinates for points
@@ -22,7 +22,7 @@ library(geoR)
 
 d = grf(n, grid = coord, xlims = c(0, 10), ylims = c(0, 10), nsim = 1, cov.model = "matern",
         cov.pars = c(1,1), 
-        kappa = 0.02, nugget = 0, lambda = 1,
+        kappa = 0.5, nugget = 0, lambda = 1,
         mean = 0, RF=TRUE)
 
 plot(coord, cex=d$data, main = "Matern RF (geoR)")
@@ -33,9 +33,9 @@ response2 <- rep(0, n)
 
 for(i in 1:n){
   cov[i] <- runif(1,0,3)
-  response[i] <- rnorm(1, 4 + 2*cov[i] + d$data[i], 1)
+  #response[i] <- rnorm(1, 4 + 2*cov[i] + d$data[i], 1)
   #response[i] <- rnorm(1, 4 + 2*cov[i], 1)
-  #response[i] <- rnorm(1, 41 + 21*cov[i] + c[i], 1)
+  response[i] <- rnorm(1, 41 + 21*cov[i] + c[i], 1)
 }
 
 #TMB stuff
@@ -48,7 +48,7 @@ f <- MakeADFun(
       DLL = "TMBExample"
 )
 
-fit = nlminb(f$par,f$fn,f$gr,lower=c(-10,-10,0))
+fit = nlminb(f$par,f$fn,f$gr,lower=c(-10,-10,0),upper=c(10.0,10.0,10))
 print(fit)
 
 
