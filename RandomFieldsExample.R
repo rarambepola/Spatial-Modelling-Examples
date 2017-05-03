@@ -19,10 +19,7 @@ plot(coord, cex = c, main = "Matern RF (Random Fields)")
 
 library(geoR)
 
-persp(coord[,1], coord[,2], c, phi = 45, theta = 45,
-      xlab = "X Coordinate", ylab = "Y Coordinate",
-      main = "RF"
-)
+
 
 
 
