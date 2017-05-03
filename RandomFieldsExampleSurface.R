@@ -1,13 +1,25 @@
 library(RandomFields)
 
 #choose number of points + prediction points
-n=1000
+xnum = 50
+ynum = 50
 pred.n = 100
+size=10
+
+n = xnum*ynum
+
+x <- seq(0, size, length.out=xnum)
+y <- seq(0, size, length.out=ynum)
+
+coord <- array(0, c(n, 2))
 
 #generate coordinates for points
-coord <- array(0,c(n,2))
-for(i in 1:n){
-  coord[i,] <- c(runif(1,0,10),runif(1,0,10))
+m = 1
+for(i in 1:xnum){
+  for(j in 1:ynum){
+    coord[m,] = c(x[i], y[j])
+    m=m+1
+  }
 }
 
 a = RMmatern(0.5)
@@ -15,11 +27,18 @@ b = RFsimulate(a, x=coord[,1], y=coord[,2])
 
 c = as.matrix(b)
 
+d = array(0, c(xnum, ynum))
+
+for(i in 1:length(d)){
+  d[i] = c[i]
+}
+
+
 plot(coord, cex = c, main = "Matern RF (Random Fields)")
 
 library(geoR)
 
-persp(coord[,1], coord[,2], c, phi = 45, theta = 45,
+persp(x, y, d, phi = 45, theta = 45,
       xlab = "X Coordinate", ylab = "Y Coordinate",
       main = "RF"
 )
@@ -77,3 +96,5 @@ output.pred2 <- inla(formula, data=inla.stack.data(stack.norm2, spde=spde), fami
                     control.compute=list(cpo=TRUE, dic=TRUE))
 
 output.pred2$summary.fixed
+
+plot(mesh)
