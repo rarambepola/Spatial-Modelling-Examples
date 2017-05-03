@@ -7,7 +7,7 @@ n=100
 #choose pixel size or pixel number
 size = 0.1
 #pixel.n = 10/size
-pixel.n = 50
+pixel.n = 100
 
 #generate pixe; coordinates and covariates
 x <-seq(0,10,length.out=pixel.n)
@@ -30,7 +30,7 @@ pixel.cov <- runif(pixel.n**2,0,3)
 #generate coordinates for other points
 coord <- array(0,c(n,2))
 for(i in 1:n){
-  coord[i,] <- c(runif(1,0,10),runif(1,0,10))
+  coord[i,] <- c(runif(1,0,10), runif(1,0,10))
 }
 
 #generate matern random field
@@ -76,6 +76,7 @@ stack.pred <- inla.stack(data=list(Response=NA), A=list(A.pred,1), effects=list(
                                                                                    list(Covariate=pixel.cov)), tag="pred")
 #define formula for model
 formula <- Response ~ -1 + Intercept + Covariate + f(spatial.field, model=spde)
+#formula <- Response ~ -1 + Intercept + f(spatial.field, model=spde)
 
 stack.join <- inla.stack(stack.norm, stack.pred)
 
@@ -93,7 +94,7 @@ nu.pred <- output.pred$summary.linear.pred[index,]$mean
 
 response.pred = array(0,c(length(nu.pred),1))
 for(i in 1:length(nu.pred)){
-  response.pred[i] = rnorm(1, nu.pred[i], 1)
+  response.pred[i] = rnorm(1, nu.pred[i], 0.1)
 }
 
 #visualise predicted responses against real responses
@@ -107,4 +108,4 @@ for(i in 1:length(response.pred)){
 }
 
 library(fields)
-image.plot(testm, col=two.colors(n=256, start="white", end="black" ))
+image.plot(testm, col=two.colors(n=256, start="white", end="black", middle="grey" ))
