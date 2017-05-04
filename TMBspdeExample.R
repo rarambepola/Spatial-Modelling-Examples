@@ -36,7 +36,7 @@ library(geoR)
 
 d = grf(n, grid = coord, xlims = c(0, 10), ylims = c(0, 10), nsim = 1, cov.model = "matern",
         cov.pars = c(1,1), 
-        kappa = 0.5, nugget = 0, lambda = 1.0,
+        kappa = 0.5, nugget = 0, lambda = 1.00,
         mean = 0, RF=TRUE)
 
 plot(coord, cex=d$data, main = "Matern RF (geoR)")
