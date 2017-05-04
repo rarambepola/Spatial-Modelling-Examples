@@ -61,12 +61,12 @@ spde <- (inla.spde2.matern(mesh=mesh, alpha=2)$param.inla)[c("M0","M1","M2")]
 
 
 n_s <- nrow(spde$M0)
-x <- rep(0.0, n_s)
+#n_s <- n
 
 
 f <- MakeADFun(
       data = list(X=response, cov=cov, spde=spde),
-      parameters = list(beta0=0, beta1=0, sigma=1, log_kappa=0.5, x=x),
+      parameters = list(beta0=0, beta1=0, sigma=1, log_kappa=0.5, x=rep(10.0, n_s)),
       random="x",
       DLL = "TMBspdeExample"
 )

@@ -30,7 +30,7 @@ Type objective_function<Type>::operator() ()
   //f=0;
   
   for(int i=0; i<n; i++){
-    f = f -dnorm(X[i],beta0 + beta1*cov[i],sigma,true);      
+    f = f -dnorm(X(i),1,sigma,true);      
 
   }
             // Use R-style call to normal density
