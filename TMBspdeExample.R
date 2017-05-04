@@ -1,18 +1,20 @@
-setwd("J:/INLAExamples")
+setwd("J:/TMB")
 
-beta0hist = rep(0, (ntotal <- 50))
-beta1hist = rep(0, ntotal)
+ntotal = 10
+
+error =0
+errorspde = 0
 
 library(RandomFields)
 library(TMB)
 library(INLA)
-  
 
 #TMB stuff
 
-compile("TMBspdeExample.cpp")
-dyn.load(dynlib("TMBspdeExample"))
+compile("TMBspde.cpp")
+dyn.load(dynlib("TMBspde"))
 
+for(k in 1:ntotal){
 
 #choose number of points + prediction points
 n=200
@@ -45,11 +47,13 @@ cov <- rep(0, n)
 response <- rep(0, n)
 response2 <- rep(0, n)
 
+rb0 <- 0.25
+rb1 <- 0.99
 for(i in 1:n){
   cov[i] <- runif(1,0,3)
-  response[i] <- rnorm(1, 0.5 + 0.5*cov[i] + d$data[i], 1)
+  #response[i] <- rnorm(1, rb0 + rb1*cov[i] + d$data[i], 1)
   #response[i] <- rnorm(1, 4 + 2*cov[i], 1)
-  #response[i] <- rnorm(1, 1 + 2*cov[i] + c[i], 1)
+  response[i] <- rnorm(1, rb0 + rb1*cov[i] + c[i], 1)
 }
 
 
@@ -59,17 +63,17 @@ plot(mesh)
 
 spde <- (inla.spde2.matern(mesh=mesh, alpha=2)$param.inla)[c("M0","M1","M2")]
 
-
+idx <- mesh$idx$loc
 n_s <- nrow(spde$M0)
-#n_s <- n
 
 
 f <- MakeADFun(
-      data = list(X=response, cov=cov, spde=spde),
-      parameters = list(beta0=0, beta1=0, sigma=1, log_kappa=0.5, x=rep(10.0, n_s)),
+      data = list(X=response, cov=cov, spde=spde, idx=idx),
+      parameters = list(beta2=0, beta1=0, sigma=1, log_kappa=2.5, x=c x=runif(n_s,0,10)),
       random="x",
-      DLL = "TMBspdeExample"
+      DLL = "TMBspde"
 )
+
 fit <- nlminb(f$par,f$fn,f$gr,lower=c(-10,-10,0,0))
 
 compile("TMBExample.cpp")
@@ -83,5 +87,6 @@ g <- MakeADFun(
 
 fit2 <- nlminb(g$par,g$fn,g$gr,lower=c(-10,-10,0))
 
-print(fit$par)
-print(fit2$par)
+error = error + abs(as.numeric(fit2$par[1]) - rb0) + abs(as.numeric(fit2$par[2]) - rb1)
+errorspde = errorspde + abs(as.numeric(fit$par[1]) - rb0) + abs(as.numeric(fit$par[2]) - rb1)
+}

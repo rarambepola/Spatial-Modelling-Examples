@@ -7,7 +7,7 @@ pred.n = 100
 #generate coordinates for points
 coord <- array(0,c(n,2))
 for(i in 1:n){
-  coord[i,] <- c(runif(1,0,10),runif(1,0,10))
+  coord[i,] <- c(runif(1,0,1),runif(1,0,1))
 }
 
 a = RMmatern(0.5)
