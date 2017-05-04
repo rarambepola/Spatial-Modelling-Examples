@@ -40,7 +40,7 @@ for(i in 1:n){
 library(INLA)
 
 
-mesh <- inla.mesh.2d(loc = coord, max.edge=c(35,100)) 
+mesh <- inla.mesh.2d(loc = coord, max.edge=c(35,100.0)) 
 
 spde <- inla.spde2.matern(mesh=mesh, alpha=2) 
 
