@@ -7,21 +7,30 @@ Type objective_function<Type>::operator() ()
   using namespace density;
   using namespace Eigen;
   
-  DATA_VECTOR(x);                                     // Data vector transmitted from R
+  DATA_VECTOR(X);                                     // Data vector transmitted from R
   DATA_VECTOR(cov);
   PARAMETER(beta0);                                  // Parameter value transmitted from R
   PARAMETER(beta1);
-  PARAMETER(sigma)
+  PARAMETER(sigma);
+  PARAMETER(log_kappa);
+  PARAMETER_VECTOR(x);
     
   DATA_STRUCT(spde,spde_t);
   
+  Type kappa = exp(log_kappa);
+  
+  SparseMatrix<Type> Q = Q_spde(spde, kappa);
+  
   int n;  
-  n = x.size();
+  n = X.size();
 
   Type f;     // Declare the "objective function" (neg. log. likelihood)
-  f=0;
+  f= GMRF(Q)(x);
+  //f=0;
+  
   for(int i=0; i<n; i++){
-    f = f -dnorm(x[i],beta0 + beta1*cov[i],sigma,true);       
+    f = f -dnorm(X[i],beta0 + beta1*cov[i],sigma,true);      
+
   }
             // Use R-style call to normal density
 
