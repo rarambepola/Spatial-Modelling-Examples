@@ -26,6 +26,7 @@ Type objective_function<Type>::operator() ()
 
   Type f;     // Declare the "objective function" (neg. log. likelihood)
   f= GMRF(Q)(x);
+  //printf("test\n")
   //f=0;
   
   for(int i=0; i<n; i++){

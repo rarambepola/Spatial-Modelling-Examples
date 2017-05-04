@@ -14,8 +14,6 @@ n=500
 
 pred.n = 100
 
-for(k in 1:ntotal){
-
 #generate coordinates for points
 coord <- array(0,c(n,2))
 for(i in 1:n){
@@ -45,9 +43,9 @@ response2 <- rep(0, n)
 for(i in 1:n){
   cov[i] <- runif(1,0,3)
 
-  #response[i] <- rnorm(1, 4 + 2*cov[i] + d$data[i], 1)
+  response[i] <- rnorm(1, 4 + 2*cov[i] + d$data[i], 1)
   #response[i] <- rnorm(1, 4 + 2*cov[i], 1)
-  response[i] <- rnorm(1, 0.01 + 0.01*cov[i] + c[i], 1)
+  #response[i] <- rnorm(1, 1 + 2*cov[i] + c[i], 1)
 
 }
 
@@ -62,10 +60,4 @@ f <- MakeADFun(
 fit = nlminb(f$par,f$fn,f$gr,lower=c(-10,-10,0))
 print(fit)
 
-
-beta0hist2[k] <- as.numeric(fit$par[1])
-beta1hist2[k] <- as.numeric(fit$par[2])
-
-
-}
 

@@ -19,10 +19,6 @@ plot(coord, cex = c, main = "Matern RF (Random Fields)")
 
 library(geoR)
 
-
-
-
-
 d = grf(n, grid = coord, xlims = c(0, 10), ylims = c(0, 10), nsim = 1, cov.model = "matern",
     cov.pars = c(1,1), 
     kappa = 0.5, nugget = 0, lambda = 1,
