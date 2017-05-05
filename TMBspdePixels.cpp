@@ -9,12 +9,15 @@ Type objective_function<Type>::operator() ()
   
   DATA_VECTOR(X);                                     // Data vector transmitted from R
   DATA_VECTOR(cov);
-  DATA_IVECTOR(idx); 
+
   PARAMETER(beta5);                                  // Parameter value transmitted from R
   PARAMETER(beta1);
   PARAMETER(sigma);
   PARAMETER(log_kappa);
   PARAMETER_VECTOR(x);
+  
+  DATA_SPARSE_MATRIX(Apixel);
+  DATA_IVECTOR(box_total);
     
   DATA_STRUCT(spde,spde_t);
   
@@ -39,10 +42,19 @@ Type objective_function<Type>::operator() ()
   f = f - dnorm(beta1, beta_mean, beta_sd);
   f = f - dnorm(log_kappa, log_kappa_mean, log_kappa_sd);
   
+  vector<Type> field = Apixel*x;
+  
+  int mstart = 0;
+  int mstop = 0;
   
   for(int i=0; i<n; i++){
-    f = f -dnorm(X(i), beta5 + beta1*cov(i) +x(idx(i)),sigma,true);      
-
+    Type total=0;
+    mstop = mstart + box_total(i);
+    for(int j=mstart; j<mstop; j++){
+      total = total + beta5 + beta1*cov(j) + field(j);
+    }
+    f = f -dnorm(X(i), total,sigma,true); 
+    mstart = mstop;
   }
             // Use R-style call to normal density
 
