@@ -27,6 +27,7 @@ for(i in 1:n){
   coord[i,] <- c(runif(1,0,10),runif(1,0,10))
 }
 
+
 a <- RMmatern(0.5)
 b <- RFsimulate(a, x=coord[,1], y=coord[,2])
 
