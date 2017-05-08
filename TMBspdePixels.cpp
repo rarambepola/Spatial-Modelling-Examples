@@ -9,11 +9,15 @@ Type objective_function<Type>::operator() ()
   
   DATA_VECTOR(X);                                     // Data vector transmitted from R
   DATA_VECTOR(cov);
+  DATA_VECTOR(cov2);
   PARAMETER(beta0);                                  // Parameter value transmitted from R
   PARAMETER(beta1);
+  PARAMETER(beta2)
   PARAMETER(sigma);
   PARAMETER(log_kappa);
+  PARAMETER(log_tau);
   PARAMETER_VECTOR(x);
+  
   
   DATA_SPARSE_MATRIX(Apixel);
   DATA_IVECTOR(box_total);
@@ -27,8 +31,13 @@ Type objective_function<Type>::operator() ()
   
   Type log_kappa_mean = -3.0;
   Type log_kappa_sd = 1.0;
-  Type beta_mean = 0.0;
-  Type beta_sd = 1.0;
+  Type log_tau_mean = 0.0;
+  Type log_tau_sd = 1.0;
+  Type beta_mean = 3.0;
+  Type beta_sd = 10.0;
+  Type sigma_mean = 1.0;
+  Type sigma_sd = 1.0;
+  
   
   SparseMatrix<Type> Q = Q_spde(spde, kappa);
   
@@ -36,13 +45,17 @@ Type objective_function<Type>::operator() ()
   n = X.size();
   
   Type f;     // Declare the "objective function" (neg. log. likelihood)
-  f= GMRF(Q)(x);
+  f = SCALE(GMRF(Q), 1/exp(log_tau))(x);
+  //f= GMRF(Q)(x);
   //printf("test\n")
   //f=0;
   
   f -= dnorm(beta0, beta_mean, beta_sd, true);
   f -= dnorm(beta1, beta_mean, beta_sd, true);
+  f -= dnorm(beta2, beta_mean, beta_sd, true);
   f -= dnorm(log_kappa, log_kappa_mean, log_kappa_sd, true);
+  f -= dnorm(log_tau, log_tau_mean, log_tau_sd, true);
+  f -= dnorm(sigma, sigma_mean, sigma_sd, true);
   
   vector<Type> field = Apixel*x;
   
@@ -52,19 +65,20 @@ Type objective_function<Type>::operator() ()
   start = 0;
   stop = box_total(0);
   
+  Type sd=1;
+  
   for(int i = 0; i<n; i++){
-  Type total = 0;
-  //for(int j=boxnum*i; j<boxnum*(i+1); j++){
-  for(int j=start; j<stop; j++){
-    total += beta0 + beta1*cov(j) + field(j);
-  }
+    Type total = 0;
+    //for(int j=boxnum*i; j<boxnum*(i+1); j++){
+    for(int j=start; j<stop; j++){
+      total += beta0 + beta1*cov(j) + beta2*cov2(j) + field(j);
+    }
   
-  if(i<(n-1)){
-  start = start + box_total(i);
-  stop = stop + box_total(i+1);}
+    if(i<(n-1)){
+    start = start + box_total(i);
+    stop = stop + box_total(i+1);}
   
-  f -= dnorm(X(i), total, sigma, true);
-  
+    f -= dnorm(X(i), total, sqrt(box_total(i))*sigma, true);
   }
   
   /*int mstart = 0;
