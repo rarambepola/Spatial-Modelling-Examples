@@ -9,8 +9,7 @@ Type objective_function<Type>::operator() ()
   
   DATA_VECTOR(X);                                     // Data vector transmitted from R
   DATA_VECTOR(cov);
-
-  PARAMETER(beta5);                                  // Parameter value transmitted from R
+  PARAMETER(beta0);                                  // Parameter value transmitted from R
   PARAMETER(beta1);
   PARAMETER(sigma);
   PARAMETER(log_kappa);
@@ -18,6 +17,9 @@ Type objective_function<Type>::operator() ()
   
   DATA_SPARSE_MATRIX(Apixel);
   DATA_IVECTOR(box_total);
+  
+  //DATA_INTEGER(boxnum);
+  
     
   DATA_STRUCT(spde,spde_t);
   
@@ -38,13 +40,34 @@ Type objective_function<Type>::operator() ()
   //printf("test\n")
   //f=0;
   
-  f = f - dnorm(beta5, beta_mean, beta_sd);
-  f = f - dnorm(beta1, beta_mean, beta_sd);
-  f = f - dnorm(log_kappa, log_kappa_mean, log_kappa_sd);
+  f -= dnorm(beta0, beta_mean, beta_sd, true);
+  f -= dnorm(beta1, beta_mean, beta_sd, true);
+  f -= dnorm(log_kappa, log_kappa_mean, log_kappa_sd, true);
   
   vector<Type> field = Apixel*x;
   
-  int mstart = 0;
+  Type a = field(0);
+  
+  int start, stop;
+  start = 0;
+  stop = box_total(0);
+  
+  for(int i = 0; i<n; i++){
+  Type total = 0;
+  //for(int j=boxnum*i; j<boxnum*(i+1); j++){
+  for(int j=start; j<stop; j++){
+    total += beta0 + beta1*cov(j) + field(j);
+  }
+  
+  if(i<(n-1)){
+  start = start + box_total(i);
+  stop = stop + box_total(i+1);}
+  
+  f -= dnorm(X(i), total, sigma, true);
+  
+  }
+  
+  /*int mstart = 0;
   int mstop = 0;
   
   for(int i=0; i<n; i++){
@@ -57,6 +80,7 @@ Type objective_function<Type>::operator() ()
     mstart = mstop;
   }
             // Use R-style call to normal density
+   */
 
   return f;
 }

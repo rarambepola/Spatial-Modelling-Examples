@@ -135,6 +135,8 @@ spde <- (inla.spde2.matern(mesh=mesh, alpha=2)$param.inla)[c("M0","M1","M2")]
 idx <- mesh$idx$loc
 n_s <- nrow(spde$M0)
 
+x <- rep(0, n_s)
+
 ###Create "box" (i.e. aggregate) data
 box.x.n <- 10
 box.y.n <- 10
@@ -172,11 +174,12 @@ for(i in 1:box.n.total){
   }
 }
 
-#get an average value for covariates and responses
+
+#get an average value for covariates and responses - not sure we actually want this
 for(i in 1:box.n.total){
   box.index[[i]] <- rep(0, box.total[i])
-  box.cov[i] = box.cov[i]/box.total[i]
-  box.response[i] = box.response[i]/box.total[i]
+  #box.cov[i] = box.cov[i]/box.total[i]
+  #box.response[i] = box.response[i]/box.total[i]
 }
 
 box.count <- rep(1, box.n.total)
@@ -187,22 +190,26 @@ for(i in 1:n.total){
 }
 
 #visualise aggregated data
-pixelplot(box.cov, total.x.size, total.y.size, box.x.n, box.y.n, main="Aggregated (averages) covariate")
-pixelplot(box.response, total.x.size, total.y.size, box.x.n, box.y.n, main="Aggregated (averages) response")
+pixelplot(box.cov, total.x.size, total.y.size, box.x.n, box.y.n, main="Aggregated (averaged) covariate")
+pixelplot(box.response, total.x.size, total.y.size, box.x.n, box.y.n, main="Aggregated (averaged) response")
 
 A <- inla.spde.make.A(mesh=mesh, loc=ordered.coord) 
 
-if(FALSE){
+if(TRUE){
 
 f <- MakeADFun(
-      data = list(X=box.response, cov=box.cov, spde=spde, Apixel = A, box_total = box.total),
-      parameters = list(beta5=0, beta1=0, sigma=1, log_kappa=2.5, x=runif(n_s,0,10)),
+      data = list(X=box.response, cov=cov, spde=spde, Apixel = A, box_total = box.total),
+      parameters = list(beta0=0, beta1=0, sigma=1, log_kappa=2.5, x=runif(n_s,0,10)),
       random="x",
       DLL = "TMBspdePixels"
 )
 
 fit <- nlminb(f$par,f$fn,f$gr,lower=c(-10,-10,0,0))
 
+print(fit)
+}
+
+if(FALSE){
 compile("TMBExample.cpp")
 dyn.load(dynlib("TMBExample"))
 
@@ -214,7 +221,7 @@ g <- MakeADFun(
 
 fit2 <- nlminb(g$par,g$fn,g$gr,lower=c(-10,-10,0))
 
-print(fit)
+
 print(fit2)
 }
 
