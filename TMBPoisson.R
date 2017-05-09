@@ -4,6 +4,11 @@ library(RandomFields)
 library(TMB)
 library(INLA)
 
+###coefficients
+b0 <- 1.0
+b1 <- 0.7
+b2 <- 1.0
+
 ##Functions
 #function to find which box number a point is in
 #(boxes are numbered left to right, bottom to top, e.g. lowest row
@@ -19,6 +24,7 @@ boxfind <- function(coord, box.x.length, box.y.length, box.y.n){
 
 #function to plot and colour pixels based on a vector of values
 pixelplot <- function(values, total.x.size, total.y.size, x.n, y.n, main=NULL){
+
   x.length <- total.x.size/x.n
   y.length <- total.y.size/y.n
   
@@ -35,6 +41,7 @@ pixelplot <- function(values, total.x.size, total.y.size, x.n, y.n, main=NULL){
       m <- m+1
     }
   }
+  
   return()
 }
   
@@ -43,6 +50,9 @@ pixelplot <- function(values, total.x.size, total.y.size, x.n, y.n, main=NULL){
 #TMB stuff
 compile("TMBPoisson.cpp")
 dyn.load(dynlib("TMBPoisson"))
+
+compile("TMBPoissonNoPixels.cpp")
+dyn.load(dynlib("TMBPoissonNoPixels"))
 
 #choose size
 total.x.size <- 70
@@ -88,9 +98,16 @@ plot(coord)
 ###Generate fake data
 #generate random field
 a <- RMmatern(3)
-b <- RFsimulate(a, x=coord[,1], y=coord[,2])
+as <- RFsimulate(a, x=coord[,1], y=coord[,2])
+a.field <- as.matrix(as)
 
-c <- as.matrix(b)
+a2 <- RMmatern(4, scale=3, var=1)
+as2 <- RFsimulate(a2, x=coord[,1], y=coord[,2])
+cov <- as.matrix(as2)
+
+a3 <- RMmatern(0.2, scale=5, var=6)
+as3 <- RFsimulate(a3, x=coord[,1], y=coord[,2])
+cov2 <- as.matrix(as3)
 
 
 #visualise random field
@@ -111,15 +128,14 @@ plot(coord, cex=d$data, main = "Matern RF (geoR)")
 }
 
 #generate covariate and responses
-cov <- rep(0, n.total)
+#cov <- rep(0, n.total)
 response <- rep(0, n.total)
 
-b0 <- 3.0
-b1 <- 1.0
+
 for(i in 1:n.total){
   #cov[i] <- rnorm(1,coord[i,1]+coord[i,2], 20)/20
-  cov[i] <- runif(1,0,3)
-  response[i] <- rpois(1, exp(b0 + b1*cov[i] + c[i]))
+  #cov[i] <- runif(1,0,3)
+  response[i] <- rpois(1, exp(b0 + b1*cov[i] + b2*cov2[i] + a.field[i]))
 }
 
 #visualise response
@@ -138,8 +154,8 @@ n_s <- nrow(spde$M0)
 x <- rep(0, n_s)
 
 ###Create "box" (i.e. aggregate) data
-box.x.n <- 35
-box.y.n <- 35
+box.x.n <- 10
+box.y.n <- 10
 box.n.total <- box.x.n*box.y.n
 
 box.x.length <- total.x.size/box.x.n
@@ -164,12 +180,16 @@ for(i in 1:n.total){
 
 ordered.coord <- array(0, c(n.total, 2))
 ordered.index <- rep(0, n.total)
+ordered.cov <- rep(0, n.total)
+ordered.cov2 <- rep(0, n.total)
 
 m <- 1
 for(i in 1:box.n.total){
   for(j in 1:n.total){
     if(coord.box.number[j] == i){
       ordered.coord[m, ] <- coord[j, ]
+      ordered.cov[m] <- cov[j]
+      ordered.cov2[m] <- cov2[j]
       ordered.index[m] <- j
       m <- m+1
     }
@@ -207,17 +227,52 @@ A <- inla.spde.make.A(mesh=mesh, loc=ordered.coord)
 if(TRUE){
 
 f <- MakeADFun(
-      data = list(X=box.response, cov=cov, spde=spde, Apixel = A, box_total = box.total),
-      parameters = list(beta0=0, beta1=0, log_kappa=2.5, log_tau=0.0, x=runif(n_s,0,10)),
+      data = list(X=box.response, cov=ordered.cov, cov2 = ordered.cov2, spde=spde, Apixel = A, box_total = box.total),
+      parameters = list(beta0=0, beta1=0, beta2=0, log_kappa=2.5, log_tau=0.0, x=runif(n_s,0,10)),
       random="x",
       DLL = "TMBPoisson"
 )
 
 #fit <- nlminb(f$par,f$fn,f$gr,lower=c(-10,-10,0,0))
-fit <- nlminb(f$par,f$fn,f$gr)
+fit.box <- nlminb(f$par,f$fn,f$gr)
 
-print(fit)
+
+if(FALSE){
+f3 <- MakeADFun(
+  data = list(X=box.response, cov=cov, cov2 = cov2, spde=spde, Apixel = A, box_total = box.total),
+  parameters = list(beta0=0, beta1=0, beta2=0, log_kappa=2.5, log_tau=0.0, x=runif(n_s,0,10)),
+  random="x",
+  DLL = "TMBPoisson"
+)
+
+
+
+#fit <- nlminb(f$par,f$fn,f$gr,lower=c(-10,-10,0,0))
+fit.box.wrong <- nlminb(f3$par,f3$fn,f3$gr)
 }
+
+A2 <- inla.spde.make.A(mesh=mesh, loc=coord)  
+
+f2 <- MakeADFun(
+  data = list(X=response, cov=cov, cov2 = cov2, spde=spde, Apixel = A2),
+  parameters = list(beta0=0, beta1=0, beta2=0, log_kappa=2.5, log_tau=0.0, x=runif(n_s,0,10)),
+  random="x",
+  DLL = "TMBPoissonNoPixels"
+)
+
+
+#fit <- nlminb(f$par,f$fn,f$gr,lower=c(-10,-10,0,0))
+fit.points <- nlminb(f2$par,f2$fn,f2$gr)
+
+#print(fit.box.wrong$par)
+print(fit.box$par)
+print(fit.points$par)
+cat("beta0", b0, "beta1", b1, "beta2", b2,"\n")
+
+
+}
+
+if(FALSE){
 
 if(FALSE){
 compile("TMBExample.cpp")
@@ -239,8 +294,10 @@ pred <- rep(0, n.total)
 beta0 <- fit$par[1]
 beta1 <- fit$par[2]
 
+error1 = 0
 for(i in 1:n.total){
   pred[i] <- rpois(1, exp(beta0 + beta1*cov[i]))
+  error1 = error1 + abs(pred[i] - response[i])
 }
 
 pixelplot(response, total.x.size, total.y.size, x.n, y.n, main="Response")
@@ -255,17 +312,40 @@ for(i in 1:1035){
   a[i] <- out$par.random[i]
 }
 
+error = 0
 for(i in 1:n.total){
   pred[i] <- exp(beta0 + beta1*cov[i] + (A%*%a)[ordered.index.inverse[i]])
   field[i] <- (A%*%a)[ordered.index.inverse[i]]
+  error = error + abs(pred[i] - response[i])
 }
-
 
 
 pixelplot(response, total.x.size, total.y.size, x.n, y.n, main="Response")
 pixelplot(pred, total.x.size, total.y.size, x.n, y.n, main="Predicted Response")
 pixelplot(field, total.x.size, total.y.size, x.n, y.n, main="Field")
 
+pixelplot(c, total.x.size, total.y.size, x.n, y.n, main="Field")
 
 
+##confidence intervals...
+b <- summary(out, "fixed")
+beta0max <- b[1,1] + 2*b[1,2]
+beta0min <- b[1,1] - 2*b[1,2]
+beta1max <- b[2,1] + 2*b[2,2]
+beta1min <- b[2,1] - 2*b[2,2]
+
+count <- 0
+predmax <- rep(0, n.total)
+predmin <- rep(0, n.total)
+for(i in 1:n.total){
+  predmax[i] <- exp(beta0max + beta1max*cov[i] + (A%*%a)[ordered.index.inverse[i]])
+  predmin[i] <- exp(beta0min + beta1min*cov[i] + (A%*%a)[ordered.index.inverse[i]])
+  
+  if(response[i]<predmax[i] && response[i]>predmin[i]){
+    count <- count+1
+  }
+  
+}
+
+}
 

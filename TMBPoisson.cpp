@@ -9,8 +9,10 @@ Type objective_function<Type>::operator() ()
   
   DATA_VECTOR(X);                                     // Data vector transmitted from R
   DATA_VECTOR(cov);
+  DATA_VECTOR(cov2);
   PARAMETER(beta0);                                  // Parameter value transmitted from R
   PARAMETER(beta1);
+  PARAMETER(beta2);
   PARAMETER(log_kappa);
   PARAMETER(log_tau);
   PARAMETER_VECTOR(x);
@@ -46,6 +48,7 @@ Type objective_function<Type>::operator() ()
   
   f -= dnorm(beta0, beta_mean, beta_sd, true);
   f -= dnorm(beta1, beta_mean, beta_sd, true);
+  f -= dnorm(beta2, beta_mean, beta_sd, true);
   f -= dnorm(log_kappa, log_kappa_mean, log_kappa_sd, true);
   f -= dnorm(log_tau, log_tau_mean, log_tau_sd, true);
   f = SCALE(GMRF(Q), 1/exp(log_tau))(x);
@@ -58,15 +61,16 @@ Type objective_function<Type>::operator() ()
   
   for(int i = 0; i<n; i++){
   Type total = 0;
-  for(int j=start; j<stop; j++){
-    total += exp(beta0 + beta1*cov(j) + field(j));
-  }
+    for(int j=start; j<stop; j++){
+      total += exp(beta0 + beta1*cov(j) + beta2*cov2(j) + field(j));
+    }
   
-  if(i<(n-1)){
-  start = start + box_total(i);
-  stop = stop + box_total(i+1);}
-  
-  f -= dpois(X(i), total, true);
+    if(i<(n-1)){
+      start = start + box_total(i);
+      stop = stop + box_total(i+1);
+    }
+    
+    f -= dpois(X(i), total, true);
   }
   
   /*int mstart = 0;
